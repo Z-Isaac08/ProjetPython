@@ -1,0 +1,33 @@
+# Environnement virtuel
+venv/
+.env
+
+# Fichiers compilés
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Fichiers de configuration secrets
+data/
+
+# Dossier de cache temporaire
+cache/
+
+# Fichiers générés par Flask
+instance/
+
+# Répertoires de logs
+logs/
+
+# Répertoires de builds avec des outils frontend comme npm
+node_modules/
+
+# Outils IDE
+.vscode/
+.idea/
+*.iml
+
+# OS spécifiques
+.DS_Store
+Thumbs.db
