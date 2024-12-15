@@ -2,15 +2,15 @@ import React from 'react';
 import Sidebar from '../Sidebar/Sidebar';
 import Book from '../Book/Book';
 
-const Home = () => {
+const Borrow = () => {
     return (
         <div className="flex">
-            {/* Sidebar visible uniquement sur la page Home */}
+            {/* Sidebar visible uniquement sur la page Borrow */}
             <Sidebar />
 
-            {/* Contenu principal de Home */}
+            {/* Contenu principal de Borrow */}
             <div className="ml-64 p-4 flex-1">
-                <h1 className="text-3xl text-slate-600 font-bold mb-4">Bienvenue sur la page d'accueil BiblioFarm</h1>
+                <h1 className="text-3xl text-slate-600 font-bold mb-4">Mes emprunts</h1>
                 <div className="flex items-center space-x-2 p-4">
                     <input
                         type="text"
@@ -32,4 +32,4 @@ const Home = () => {
     );
 };
 
-export default Home;
+export default Borrow;
