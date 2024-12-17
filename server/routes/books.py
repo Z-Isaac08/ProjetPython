@@ -22,13 +22,15 @@ def find_book_id(books, book_id):
     return None
 
 
-# 🚀 Route pour **Create**
 @books_bp.route("/", methods=["POST"])
 def add_book():
     books = load_data(BOOKS_FILE)
 
     data = request.json
-    book_id = max(int(book["id"]) for book in books) + 1
+    if len(books) == 0 : 
+        book_id = 1
+    else : 
+        book_id = max(int(book["id"]) for book in books) + 1
     titre = data.get("titre")
     auteur = data.get("auteur")
     annee = data.get("annee")
@@ -47,7 +49,7 @@ def add_book():
         "annee": int(annee),
         "total_exemplaire": int(exemplaire),
         "exemplaire_restant": int(exemplaire),
-        "disponible": False
+        "disponible": True
     }
     books.append(new_book)
     save_data(BOOKS_FILE, books)
@@ -55,17 +57,11 @@ def add_book():
     return jsonify({"message": f"Le livre '{titre}' ajouté avec succès.", "book": new_book}), 201
 
 
-# 🚀 Route pour **Read** - Obtenir tous les livres
+# 🚀 Route pour Read - Obtenir tous les livres
 @books_bp.route("/", methods=["GET"])
 def get_books():
     books = load_data(BOOKS_FILE)
     return jsonify({"books": books}), 200
-
-@books_bp.route("/available", methods=["GET"])
-def get_available_books():
-    books = load_data(BOOKS_FILE)
-    available_book = [book for book in books if book["exemplaire_restant"] > 0]
-    return jsonify({"books": available_book}), 200
 
 @books_bp.route("/borrowed", methods=["GET"])
 def get_borrowed_books():
@@ -74,38 +70,35 @@ def get_borrowed_books():
     return jsonify({"books": borrowed_books}), 200
 
 # 🚀 Route pour **Read** - Rechercher un livre par titre ou auteur
-@books_bp.route("/rechercher", methods=["GET"])
+@books_bp.route("/search", methods=["GET"])
 def search_books():
-    mot_cle = request.args.get("mot_cle")
-    books = load_data(BOOKS_FILE)
+    try:
+        # Récupérer le mot-clé de la requête
+        mot_cle = request.args.get("mot_cle")
+        
+        # Vérification si le mot-clé est fourni
+        if not mot_cle:
+            return jsonify({"error": "Veuillez fournir un mot-clé pour effectuer la recherche."}), 400
 
-    results = [
-        book for book in books
-        if mot_cle.lower() in book["titre"].lower() or mot_cle.lower() in book["auteur"].lower()
-    ]
-    return jsonify({"results": results}), 200
+        # Charger les données des livres
+        books = load_data(BOOKS_FILE)
 
+        # Recherche des livres correspondant au mot-clé
+        results = [
+            book for book in books
+            if mot_cle.lower() in book["titre"].lower() or mot_cle.lower() in book["auteur"].lower()
+        ]
 
-# 🚀 Route pour **Update** - Mettre à jour un livre
-@books_bp.route("/<int:book_id>", methods=["PUT"])
-def update_book(book_id):
-    data = request.json
-    books = load_data(BOOKS_FILE)
+        # Vérification si des résultats ont été trouvés
+        if not results:
+            return jsonify({"message": "Aucun livre ne correspond à votre recherche.", "results": []}), 200
 
-    book = find_book_id(books, book_id)
-    if not book:
-        return jsonify({"error": f"Le livre '{book["titre"]}' n'existe pas."}), 404
+        # Retourner les résultats trouvés
+        return jsonify({"results": results}), 200
 
-    # Mettre à jour les valeurs
-    book["titre"] = data.get("titre", book["titre"])
-    book["auteur"] = data.get("auteur", book["auteur"])
-    book["annee"] = data.get("annee", book["annee"])
-    book["total_exemplaire"] = data.get("total_exemplaire", book["total_exemplaire"])
-    book["exemplaire_restant"] = book["total_exemplaire"]  # Reset en fonction des changements
-
-    save_data(BOOKS_FILE, books)
-
-    return jsonify({"message": f"Le livre '{book["titre"]}' a été mis à jour avec succès.", "book": book}), 200
+    except Exception as e:
+        # Gestion des erreurs imprévues
+        return jsonify({"error": f"Une erreur est survenue : {str(e)}"}), 500
 
 
 # 🚀 Route pour **Delete** - Supprimer un livre

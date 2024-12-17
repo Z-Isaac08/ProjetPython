@@ -1,10 +1,10 @@
 import axios from "axios";
 import useUserStore from "../../store/userStore";
 
-const Book = ({ book }) => {
+const BookBorrow = ({ book }) => {
     const user = useUserStore((state) => state.user);
 
-    const handleBorrow = async (userId, book_id) => {
+    const handleReturn = async (userId, book_id) => {
         try {
             // Préparer les données à envoyer
             const data = {
@@ -13,7 +13,7 @@ const Book = ({ book }) => {
             };
 
             // Envoyer une requête POST au backend
-            const response = await axios.post("http://localhost:5000/users/borrow", data);
+            const response = await axios.post("http://localhost:5000/users/return", data);
 
             // Vérifier la réponse
             if (response.status === 200) {
@@ -35,17 +35,12 @@ const Book = ({ book }) => {
                 <p className='text-md italic text-slate-400'>{book.annee}</p>
             </div>
             <p className="text-xl font-medium text-slate-500">Ecrit par {book.auteur}</p>
-            {book.disponible ?
-                <button
-                    className='self-center bg-slate-500 text-white px-4 py-2 rounded-md hover:bg-slate-700 transition'
-                    onClick={() => handleBorrow(user.user_id, book.id)}
-                >Emprunter</button> :
-                <button
-                    className='font-medium self-center bg-white text-red-600 px-4 py-2 '
-                >Hors stock</button>
-            }
+            <button
+                className='self-center bg-slate-500 text-white px-4 py-2 rounded-md hover:bg-slate-700 transition'
+                onClick={() => handleReturn(user.user_id, book.id)}
+            >Retourner</button>
         </div>
     )
 }
 
-export default Book
+export default BookBorrow

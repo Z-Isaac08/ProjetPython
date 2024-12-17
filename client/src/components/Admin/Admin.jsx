@@ -1,43 +1,95 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SidebarAdmin from '../Sidebar/SidebarAdmin';
+import axios from 'axios';
 
 const Admin = () => {
-    const [users, setUsers] = useState([
-        { id: 1, name: "Alice" },
-        { id: 2, name: "Bob" },
-        { id: 3, name: "Charlie" },
-    ]);
-
-    const [books, setBooks] = useState([
-        { id: 1, title: "Livre 1", author: "Auteur 1", year: 2020, available: true },
-        { id: 2, title: "Livre 2", author: "Auteur 2", year: 2018, available: false },
-    ]);
-
+    const [name, setName] = useState("");
+    const [books, setBooks] = useState([]);
+    const [users, setUsers] = useState([]);
     const [showUserForm, setShowUserForm] = useState(false);
     const [showBookForm, setShowBookForm] = useState(false);
 
-    const handleAddUser = (name) => {
-        const newUser = { id: Date.now(), name };
-        setUsers([...users, newUser]);
-        setShowUserForm(false);
-    };
+    // États pour le formulaire de livres
+    const [bookTitle, setBookTitle] = useState("");
+    const [bookAuthor, setBookAuthor] = useState("");
+    const [bookYear, setBookYear] = useState("");
+    const [bookNum, setBookNum] = useState("");
 
-    const handleAddBook = (title, author, year) => {
-        const newBook = { id: Date.now(), title, author, year, available: true };
-        setBooks([...books, newBook]);
-        setShowBookForm(false);
+    useEffect(() => {
+        const fetchBooks = async () => {
+            try {
+                const response = await axios.get("http://localhost:5000/books/");
+                setBooks(response.data.books);
+            } catch (error) {
+                console.error("Erreur lors de la récupération des livres", error);
+            }
+        };
+        const fetchUsers = async () => {
+            try {
+                const response = await axios.get("http://localhost:5000/users/");
+                setUsers(response.data.users);
+            } catch (error) {
+                console.error("Erreur lors de la récupération des utilisateurs", error);
+            }
+        };
+        fetchUsers();
+        fetchBooks();
+    }, []);
+
+    const handleAddUser = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post("http://localhost:5000/users/", { name });
+            setUsers([...users, response.data.user]);
+            setName("");
+            setShowUserForm(false);
+            alert("Utilisateur ajouté avec succès !");
+        } catch (error) {
+            console.error("Erreur lors de l'ajout de l'utilisateur :", error);
+            alert("Échec de l'ajout de l'utilisateur. Veuillez réessayer.");
+        }
     };
+    
+    const handleDeleteUser = async (userId) => {
+        try {
+            await axios.delete(`http://localhost:5000/users/${userId}`);
+            alert("Utilisateur supprimé avec succès !");
+        } catch (error) {
+            console.error("Erreur lors de la suppression de l'utilisateur :", error);
+            alert("Échec de la suppression de l'utilisateur. Veuillez réessayer.");
+        }
+    };
+    
+    const handleAddBook = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post("http://localhost:5000/books/", {
+                titre: bookTitle,
+                auteur: bookAuthor,
+                annee: parseInt(bookYear),
+                exemplaire: parseInt(bookNum),
+            });
+            setBooks([...books, response.data.book]);
+            setBookTitle("");
+            setBookAuthor("");
+            setBookYear("");
+            setBookNum("");
+            setShowBookForm(false);
+            alert("Livre ajouté avec succès !");
+        } catch (error) {
+            console.error("Erreur lors de l'ajout du livre :", error);
+            alert("Échec de l'ajout du livre. Veuillez réessayer.");
+        }
+    };
+    
 
     return (
         <div className="flex">
-            {/* Sidebar visible uniquement sur la page Admin */}
             <SidebarAdmin />
 
-            {/* Contenu principal de la section Admin */}
             <div className="ml-64 p-6 flex-1 bg-gray-50">
                 <h1 className="text-3xl text-slate-600 font-bold mb-6">Interface Administrateur</h1>
 
-                {/* Boutons pour gérer les utilisateurs et livres */}
                 <div className="mb-4 flex space-x-4">
                     <button
                         className="px-4 py-2 bg-slate-500 text-white rounded hover:bg-slate-600 focus:outline-none"
@@ -53,7 +105,7 @@ const Admin = () => {
                     </button>
                 </div>
 
-                {/* Tableau des utilisateurs */}
+                {/* Liste des utilisateurs */}
                 <div className="overflow-auto bg-white border rounded-lg mb-6 shadow-md p-4">
                     <h2 className="text-lg font-bold mb-2">Liste des Utilisateurs</h2>
                     <table className="w-full border-collapse">
@@ -61,20 +113,31 @@ const Admin = () => {
                             <tr className="bg-gray-200 text-gray-700">
                                 <th className="border px-4 py-2">ID</th>
                                 <th className="border px-4 py-2">Nom</th>
+                                <th className="border px-4 py-2">Rôle</th>
+                                <th className="border px-4 py-2">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {users.map(user => (
-                                <tr key={user.id} className="hover:bg-gray-100">
-                                    <td className="border px-4 py-2">{user.id}</td>
+                                <tr key={user.user_id} className="hover:bg-gray-100">
+                                    <td className="border px-4 py-2">{user.user_id}</td>
                                     <td className="border px-4 py-2">{user.name}</td>
+                                    <td className="border px-4 py-2">{user.role}</td>
+                                    <td className="border px-4 py-2">
+                                        <button
+                                            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                                            onClick={() => handleDeleteUser(user.user_id)}
+                                        >
+                                            Supprimer
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
 
-                {/* Tableau des livres */}
+                {/* Liste des livres */}
                 <div className="overflow-auto bg-white border rounded-lg shadow-md p-4">
                     <h2 className="text-lg font-bold mb-2">Liste des Livres</h2>
                     <table className="w-full border-collapse">
@@ -91,10 +154,10 @@ const Admin = () => {
                             {books.map(book => (
                                 <tr key={book.id} className="hover:bg-gray-100">
                                     <td className="border px-4 py-2">{book.id}</td>
-                                    <td className="border px-4 py-2">{book.title}</td>
-                                    <td className="border px-4 py-2">{book.author}</td>
-                                    <td className="border px-4 py-2">{book.year}</td>
-                                    <td className="border px-4 py-2">{book.available ? "Oui" : "Non"}</td>
+                                    <td className="border px-4 py-2">{book.titre}</td>
+                                    <td className="border px-4 py-2">{book.auteur}</td>
+                                    <td className="border px-4 py-2">{book.annee}</td>
+                                    <td className="border px-4 py-2">{book.disponible ? "Oui" : "Non"}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -102,15 +165,20 @@ const Admin = () => {
                 </div>
             </div>
 
-            {/* Pop-up pour ajouter un utilisateur */}
+            {/* Formulaire ajout utilisateur */}
             {showUserForm && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white p-6 rounded-lg shadow-md">
                         <h2 className="text-lg mb-2 font-bold">Ajouter un Utilisateur</h2>
-                        <input className="border p-2 mb-2 w-full" placeholder="Nom" id="userName" />
+                        <input
+                            className="border p-2 mb-2 w-full"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Nom"
+                        />
                         <button
                             className="bg-slate-500 text-white px-4 py-2 rounded hover:bg-slate-600"
-                            onClick={() => handleAddUser(document.getElementById('userName').value)}
+                            onClick={handleAddUser}
                         >
                             Ajouter
                         </button>
@@ -124,21 +192,40 @@ const Admin = () => {
                 </div>
             )}
 
-            {/* Pop-up pour ajouter un livre */}
+            {/* Formulaire ajout livre */}
             {showBookForm && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white p-6 rounded-lg shadow-md">
                         <h2 className="text-lg mb-2 font-bold">Ajouter un Livre</h2>
-                        <input className="border p-2 mb-2 w-full" placeholder="Titre" id="bookTitle" />
-                        <input className="border p-2 mb-2 w-full" placeholder="Auteur" id="bookAuthor" />
-                        <input className="border p-2 mb-2 w-full" placeholder="Année" id="bookYear" />
+                        <input
+                            className="border p-2 mb-2 w-full"
+                            value={bookTitle}
+                            onChange={(e) => setBookTitle(e.target.value)}
+                            placeholder="Titre"
+                        />
+                        <input
+                            className="border p-2 mb-2 w-full"
+                            value={bookAuthor}
+                            onChange={(e) => setBookAuthor(e.target.value)}
+                            placeholder="Auteur"
+                        />
+                        <input
+                            className="border p-2 mb-2 w-full"
+                            value={bookYear}
+                            onChange={(e) => setBookYear(e.target.value)}
+                            placeholder="Année"
+                            type="number"
+                        />
+                        <input
+                            className="border p-2 mb-2 w-full"
+                            value={bookNum}
+                            onChange={(e) => setBookNum(e.target.value)}
+                            placeholder="Exemplaire"
+                            type='number'
+                        />
                         <button
                             className="bg-slate-500 text-white px-4 py-2 rounded hover:bg-slate-600"
-                            onClick={() => handleAddBook(
-                                document.getElementById('bookTitle').value,
-                                document.getElementById('bookAuthor').value,
-                                parseInt(document.getElementById('bookYear').value)
-                            )}
+                            onClick={handleAddBook}
                         >
                             Ajouter
                         </button>

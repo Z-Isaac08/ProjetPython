@@ -1,8 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Sidebar from '../Sidebar/Sidebar';
-import Book from '../Book/Book';
+import axios from 'axios';
+import useUserStore from '../../store/userStore';
+import BookBorrow from '../Book/BookBorrow';
 
 const Borrow = () => {
+    const user = useUserStore((state) => state.user);
+    const [books, setBooks] = useState([])
+
+    useEffect(() => {
+        const fetchBooks = async () => {
+            try {
+                const response = await axios.get(`http://localhost:5000/users/borrowed/${user.user_id}`);
+                setBooks(response.data.borrowed_books);
+            } catch (error) {
+                console.error("Erreur lors de la récupération des données", error);
+            }
+        };
+        fetchBooks();
+    }, []);
+
+    function getFirstLetter(str) {
+        if (str && str.length > 0) {
+            return str[0];
+        }
+        return '';
+    }
+
     return (
         <div className="flex">
             {/* Sidebar visible uniquement sur la page Borrow */}
@@ -25,7 +49,9 @@ const Borrow = () => {
                     </button>
                 </div>
                 <div className="grid grid-cols-4 gap-6 mt-6">
-                    <Book titre={"Xa"} auteur={"Jules"} annee={2020} disponible={false} />
+                    {books.map(book => (
+                        <BookBorrow key={book.id} book={book} />
+                    ))}
                 </div>
             </div>
         </div>
